@@ -6,102 +6,206 @@
     <title>KIS 주식 정보 조회</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Toast UI Grid CDN -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tui-grid@4.21.0/dist/tui-grid.css" />
+    <link rel="stylesheet" href="https://uicdn.toast.com/tui-grid/latest/tui-grid.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ag-grid/31.0.0/ag-grid.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ag-grid/31.0.0/styles/ag-theme-alpine.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ag-grid/31.0.0/ag-grid-community.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/tui-grid@4.21.0/dist/tui-grid.js"></script>
     <style>
         * { box-sizing: border-box; }
         body {
             margin: 0;
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #0f172a, #1e293b);
+            font-family: Inter, Arial, sans-serif;
+            background: #0f172a;
             color: #e2e8f0;
             min-height: 100vh;
             display: flex;
             align-items: flex-start;
             justify-content: center;
-            padding: 24px;
+            padding: 18px 16px 104px;
         }
         .card {
             width: 100%;
-            max-width: 1100px;
-            background: rgba(15, 23, 42, 0.92);
-            border: 1px solid rgba(148, 163, 184, 0.2);
-            border-radius: 20px;
-            padding: 28px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+            max-width: 420px;
+            background: transparent;
+            border: 0;
+            border-radius: 0;
+            padding: 0;
+            box-shadow: none;
         }
         h1 {
-            margin: 0 0 8px;
-            font-size: 28px;
+            margin: 0;
+            font-size: 18px;
+            line-height: 1.2;
+            font-weight: 800;
         }
         p {
-            margin: 0 0 20px;
+            margin: 4px 0 0;
             color: #94a3b8;
+            font-size: 13px;
         }
         .row {
             display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
+            gap: 10px;
+            flex-wrap: nowrap;
         }
         input {
             flex: 1;
-            min-width: 220px;
+            min-width: 0;
             padding: 14px 16px;
-            border-radius: 12px;
+            border-radius: 18px;
             border: 1px solid #334155;
-            background: #020617;
+            background: #0f172a;
             color: #e2e8f0;
-            font-size: 16px;
+            font-size: 15px;
+            outline: none;
         }
         button {
             padding: 14px 18px;
             border: 0;
-            border-radius: 12px;
-            background: #22c55e;
+            border-radius: 18px;
+            background: #10b981;
             color: #052e16;
             font-weight: 700;
             cursor: pointer;
+            transition: transform 0.2s ease, opacity 0.2s ease, background 0.2s ease;
         }
         button:disabled {
             opacity: 0.6;
             cursor: not-allowed;
         }
-        .secondary-button {
-            background: #38bdf8;
-            color: #082f49;
-        }
-        .result {
-            margin-top: 20px;
-            padding: 18px;
-            border-radius: 14px;
-            background: #111827;
-            border: 1px solid #1f2937;
-            min-height: 100px;
-        }
         .label { color: #94a3b8; font-size: 14px; }
-        .value { font-size: 24px; font-weight: 700; margin-top: 6px; }
+        .value { font-size: 19px; font-weight: 800; margin-top: 8px; line-height: 1.3; }
         .error { color: #fca5a5; }
         .section-title {
-            margin: 26px 0 12px;
-            font-size: 18px;
+            margin: 0 0 14px;
+            font-size: 12px;
             font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #94a3b8;
         }
         .hint {
             margin-top: 10px;
-            color: #cbd5e1;
-            font-size: 14px;
+            color: #94a3b8;
+            font-size: 12px;
+            line-height: 1.5;
         }
         .results-list {
             margin-top: 14px;
             display: grid;
-            gap: 10px;
+            gap: 8px;
+            max-height: 180px;
+            overflow-y: auto;
+        }
+        
+         .results-grid {
+            margin-top: 14px;
+            height: 200px;
+        }
+        
+        .results-grid.ag-theme-alpine {
+            border: 1px solid #1f2937;
+            border-radius: 8px;
+            background: #0b1220;
+            overflow: hidden;
+        }
+        
+        .results-grid.ag-theme-alpine .ag-root-wrapper {
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+        }
+        
+        .results-grid.ag-theme-alpine .ag-body-viewport {
+            overflow-x: hidden !important;
+        }
+        
+        .results-grid.ag-theme-alpine .ag-center-cols-viewport {
+            overflow-x: hidden !important;
+        }
+        
+        .results-grid.ag-theme-alpine .ag-body-horizontal-scroll-viewport {
+            display: none !important;
+        }
+        
+        .results-grid.ag-theme-alpine .ag-horizontal-scroll {
+            display: none !important;
+        }
+        
+        /* 웹킷 기반 브라우저 스크롤바 숨기기 */
+        .results-grid.ag-theme-alpine::-webkit-scrollbar {
+            display: none !important;
+        }
+        
+        .results-grid.ag-theme-alpine .ag-root-wrapper::-webkit-scrollbar {
+            display: none !important;
+        }
+        
+        .results-grid.ag-theme-alpine .ag-body-viewport::-webkit-scrollbar {
+            display: none !important;
+        }
+        
+        /* 파이어폭스 스크롤바 숨기기 */
+        .results-grid.ag-theme-alpine {
+            scrollbar-width: none !important;
+        }
+        
+        .results-grid.ag-theme-alpine .ag-root-wrapper {
+            scrollbar-width: none !important;
+        }
+        
+        .results-grid.ag-theme-alpine .ag-body-viewport {
+            scrollbar-width: none !important;
+        }
+        
+        .results-grid.ag-theme-alpine .ag-header {
+            background: #1e293b;
+            border-bottom: 1px solid #334155;
+        }
+        
+        .results-grid.ag-theme-alpine .ag-header-cell {
+            background: #1e293b;
+            color: #e2e8f0;
+            font-weight: 600;
+            border-right: 1px solid #334155;
+            font-size: 13px;
+        }
+        
+        .results-grid.ag-theme-alpine .ag-header-cell-text {
+            color: #e2e8f0;
+        }
+        
+        .results-grid.ag-theme-alpine .ag-row {
+            background: #0f172a;
+            border-bottom: 1px solid #1f2937;
+            cursor: pointer;
+        }
+        
+        .results-grid.ag-theme-alpine .ag-row:hover {
+            background: #1e293b !important;
+        }
+        
+        .results-grid.ag-theme-alpine .ag-cell {
+            color: #e2e8f0;
+            border-right: 1px solid #1f2937;
+            padding: 6px 8px;
+            font-size: 13px;
+        }
+        
+        .results-grid.ag-theme-alpine .ag-cell-value {
+            color: #e2e8f0;
         }
         .result-item {
             padding: 12px 14px;
             border: 1px solid #334155;
-            border-radius: 12px;
-            background: #0b1220;
+            border-radius: 16px;
+            background: #0f172a;
             cursor: pointer;
+        }
+        .result-item:hover {
+            background: #162033;
+            border-color: #475569;
         }
         .toolbar {
             display: flex;
@@ -155,6 +259,22 @@
             border-radius: 20px;
             padding: 20px;
             box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+        }
+        .intraday-modal-content {
+            max-width: min(1400px, 96vw);
+            width: 96vw;
+            height: min(88vh, 980px);
+            display: flex;
+            flex-direction: column;
+        }
+        .intraday-chart-box {
+            flex: 1;
+            min-height: 0;
+        }
+        #intradayChart {
+            width: 100%;
+            min-height: 620px;
+            height: 100%;
         }
         .modal-header {
             display: flex;
@@ -236,35 +356,38 @@
             color: #60a5fa;
         }
         .grid-container {
-            margin-top: 20px;
-            background: #111827;
-            border: 1px solid #1f2937;
-            border-radius: 14px;
-            padding: 16px;
+            margin-top: 0;
+            background: #1e293b;
+            border: 1px solid rgba(71, 85, 105, 0.55);
+            border-radius: 28px;
+            padding: 0;
+            overflow: hidden;
         }
         .grid-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 16px;
+            margin-bottom: 0;
+            padding: 18px 18px 14px;
+            border-bottom: 1px solid rgba(71, 85, 105, 0.45);
         }
         .grid-title {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 700;
             color: #e2e8f0;
         }
         .export-button {
-            background: #22c55e;
-            color: #052e16;
+            background: #0f172a;
+            color: #10b981;
             font-weight: 700;
-            padding: 8px 16px;
+            padding: 10px 12px;
             border: none;
-            border-radius: 8px;
+            border-radius: 12px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 12px;
         }
         .export-button:hover {
-            background: #16a34a;
+            background: #162033;
         }
         .export-button:disabled {
             opacity: 0.6;
@@ -298,37 +421,285 @@
             color: #e2e8f0 !important;
             font-weight: 700;
         }
+        /* 하단 메뉴바 스타일 */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(15, 23, 42, 0.96);
+            border-top: 1px solid rgba(51, 65, 85, 0.8);
+            display: flex;
+            justify-content: center;
+            z-index: 100;
+            padding: 10px 14px calc(10px + env(safe-area-inset-bottom, 0px));
+            backdrop-filter: blur(14px);
+        }
+        .nav-item {
+            min-width: 120px;
+            padding: 8px 18px;
+            color: #94a3b8;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 16px;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+        .nav-item:hover {
+            color: #e2e8f0;
+            background: rgba(51, 65, 85, 0.5);
+        }
+        .nav-item.active {
+            color: #22c55e;
+            background: rgba(34, 197, 94, 0.15);
+        }
+        /* 탭 컨텐츠 스타일 */
+        .tab-content {
+            display: none !important;
+        }
+        .tab-content.active {
+            display: block !important;
+        }
+        .detail-tabs {
+            display: flex;
+            gap: 8px;
+            margin: 18px 0 12px;
+        }
+        .detail-tab {
+            padding: 8px 14px;
+            border: 1px solid #334155;
+            border-radius: 999px;
+            background: #0f172a;
+            color: #94a3b8;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .detail-tab.active {
+            color: #22c55e;
+            border-color: rgba(34, 197, 94, 0.5);
+            background: rgba(34, 197, 94, 0.12);
+        }
+        .detail-tab.hidden {
+            display: none;
+        }
+        .detail-panel {
+            display: none;
+        }
+        .detail-panel.active {
+            display: block;
+        }
+        /* 메인 컨텐츠 영역에 하단 여백 추가 (메뉴바 높이) */
+        .app-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 6px 18px;
+        }
+        .brand-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 14px;
+            background: linear-gradient(180deg, #22c55e, #10b981);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 14px 28px rgba(16, 185, 129, 0.18);
+            flex-shrink: 0;
+        }
+        .brand-icon svg {
+            width: 22px;
+            height: 22px;
+            stroke: #0f172a;
+        }
+        .panel {
+            background: #1e293b;
+            border: 1px solid rgba(71, 85, 105, 0.55);
+            border-radius: 28px;
+            padding: 22px;
+            box-shadow: 0 22px 40px rgba(2, 6, 23, 0.22);
+        }
+        .grid-body {
+            padding: 0 0 10px;
+        }
+        #grid,
+        #etfGrid {
+            width: 100%;
+            height: 400px;
+        }
+        
+        /* AG Grid 스타일 */
+        .ag-theme-alpine {
+            border: 1px solid #1f2937;
+            border-radius: 8px;
+            background: #0b1220;
+        }
+        
+        .ag-theme-alpine .ag-header {
+            background: #1e293b;
+            border-bottom: 1px solid #334155;
+        }
+        
+        .ag-theme-alpine .ag-header-cell {
+            background: #1e293b;
+            color: #e2e8f0;
+            font-weight: 600;
+            border-right: 1px solid #334155;
+        }
+        
+        .ag-theme-alpine .ag-header-cell-text {
+            color: #e2e8f0;
+        }
+        
+        .ag-theme-alpine .ag-row {
+            background: #0f172a;
+            border-bottom: 1px solid #1f2937;
+        }
+        
+        .ag-theme-alpine .ag-row-even {
+            background: #0b1220;
+        }
+        
+        .ag-theme-alpine .ag-row:hover {
+            background: #1e293b !important;
+        }
+        
+        .ag-theme-alpine .ag-cell {
+            color: #e2e8f0;
+            border-right: 1px solid #1f2937;
+            padding: 8px 12px;
+        }
+        
+        .ag-theme-alpine .ag-cell-value {
+            color: #e2e8f0;
+        }
+        
+        .ag-theme-alpine .ag-cell-right-aligned {
+            text-align: right;
+        }
+        
+        .ag-theme-alpine .ag-cell-center-aligned {
+            text-align: center;
+        }
+        
+        .ag-theme-alpine .ag-root-wrapper {
+            background: #0b1220;
+            border: 1px solid #1f2937;
+        }
+        
+        .ag-theme-alpine .ag-body-viewport {
+            background: #0f172a;
+        }
+        
+        .ag-theme-alpine .ag-pinned-left-header {
+            background: #1e293b;
+        }
+        
+        .ag-theme-alpine .ag-pinned-right-header {
+            background: #1e293b;
+        }
+        .nav-icon {
+            width: 22px;
+            height: 22px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .nav-icon svg {
+            width: 22px;
+            height: 22px;
+            stroke: currentColor;
+        }
+        @media (max-width: 480px) {
+            .status-actions {
+                flex-wrap: nowrap;
+            }
+            .grid-title {
+                font-size: 15px;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="card">
-        <h1>한국투자증권 주식 정보 조회</h1>
-        <p>종목명으로 종목코드를 찾고, 현재가와 투자자별 매매동향을 한 번에 조회합니다.</p>
-        <div class="section-title">1. 종목명으로 종목코드 검색</div>
-        <div class="row">
-            <input id="stockName" type="text" placeholder="예: 삼성전자" maxlength="50" />
-            <button id="searchButton" class="secondary-button">종목 검색</button>
+        <div class="app-header">
+            <div class="brand-icon">
+                <svg fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 4v16h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.3"></path>
+                    <path d="M8 14l3-3 3 2 4-5" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.3"></path>
+                </svg>
+            </div>
+            <div>
+                <h1>Insight Stock</h1>
+                <p>Real-time KIS Data Engine</p>
+            </div>
         </div>
-        <div class="hint">검색 결과를 클릭하면 종목코드가 자동 입력되고 데이터를 바로 조회합니다.</div>
-        <div id="searchResults" class="results-list"></div>
-        <div class="section-title">2. 현재가 및 투자자 매매동향 조회</div>
-        <div class="row">
-            <input id="symbol" type="text" placeholder="예: 005930" maxlength="12" />
-            <button id="fetchButton">전체 조회</button>
-        </div>
-        <div class="result" id="result">
-            <div class="label">상태</div>
-            <div class="value">대기 중</div>
-        </div>
-        <div id="trendTableContainer" class="grid-container">
-            <div class="grid-header">
-                <div class="grid-title">일자별 투자자 매매동향</div>
-                <div style="display: flex; gap: 8px;">
-                    <button id="intradayBtn" class="export-button" style="background: #38bdf8; color: #082f49;" disabled>당일 수급 흐름 보기</button>
-                    <button id="exportBtn" class="export-button" disabled>CSV 다운로드</button>
+        <!-- 주식 조회 탭 -->
+        <div id="stockTab" class="tab-content active">
+            <div class="panel">
+                <div class="section-title">종목 검색</div>
+                <div class="row">
+                    <input id="stockName" type="text" placeholder="종목명 검색 (예: 삼성전자)" maxlength="50" />
+                    <button id="searchButton">검색</button>
+                </div>
+                <div id="searchResults" class="results-grid"></div>
+            </div>
+            <div class="detail-tabs">
+                <button id="trendDetailTab" class="detail-tab active" type="button">일자별 투자자 매매동향</button>
+                <button id="etfDetailTab" class="detail-tab hidden" type="button">ETF 구성종목</button>
+            </div>
+            <div id="trendDetailPanel" class="detail-panel active">
+                <div id="trendTableContainer" class="grid-container">
+                    <div class="grid-header">
+                        <div class="grid-title">일자별 투자자 매매동향</div>
+                        <div style="display: flex; gap: 8px;">
+                            <button id="intradayBtn" class="export-button" style="color: #0ea5e9;" disabled>당일 흐름</button>
+                            <button id="exportBtn" class="export-button" disabled>CSV</button>
+                        </div>
+                    </div>
+                    <div class="grid-body">
+                        <div id="grid" style="height: 380px;"></div>
+                    </div>
                 </div>
             </div>
-            <div id="grid" style="height: 400px;"></div>
+            <div id="etfDetailPanel" class="detail-panel">
+                <div id="etfContainer" class="grid-container">
+                    <div class="grid-header">
+                        <div class="grid-title">ETF 구성종목 및 편입비중</div>
+                        <button id="etfExportBtn" class="export-button" disabled>CSV</button>
+                    </div>
+                    <div class="grid-body">
+                        <div id="etfGrid" style="height: 400px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="myTab" class="tab-content">
+            <div class="panel">
+                <div class="section-title">My</div>
+                <div style="color: #94a3b8;">준비 중입니다.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 하단 메뉴바 -->
+    <div class="bottom-nav">
+        <div class="nav-item active" data-tab="stockTab">
+            <span class="nav-icon">
+                <svg fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><rect height="18" rx="2" width="18" x="3" y="3"></rect><path d="M3 9h18"></path><path d="M9 21V9"></path></svg>
+            </span>
+            <span>주식</span>
+        </div>
+        <div class="nav-item" data-tab="myTab">
+            <span class="nav-icon">
+                <svg fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"></path><path d="M4 20a8 8 0 1 1 16 0"></path></svg>
+            </span>
+            <span>My</span>
         </div>
     </div>
 
@@ -345,7 +716,7 @@
     </div>
 
     <div id="intradayModal" class="modal-overlay">
-        <div class="modal-content" style="max-width: 960px;">
+        <div class="modal-content intraday-modal-content">
             <div class="modal-header">
                 <div id="intradayModalTitle" class="modal-title">당일 시간대별 누적 순매수 흐름</div>
                 <div style="display: flex; gap: 8px; align-items: center;">
@@ -353,21 +724,8 @@
                     <button id="closeIntradayModalButton" class="close-button">닫기</button>
                 </div>
             </div>
-            <div class="chart-box" style="margin-top:0;">
+            <div class="chart-box intraday-chart-box" style="margin-top:0;">
                 <canvas id="intradayChart"></canvas>
-            </div>
-        </div>
-    </div>
-
-    <div id="dailyTradeModal" class="modal-overlay">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div id="dailyTradeModalTitle" class="modal-title">일자별 거래 현황</div>
-                <button id="closeDailyTradeModalButton" class="close-button">닫기</button>
-            </div>
-            <div id="dailyTradeContent" class="chart-box" style="margin-top:0;">
-                <div class="label">상세 정보</div>
-                <div class="value">로딩 중...</div>
             </div>
         </div>
     </div>
@@ -376,31 +734,34 @@
         const stockNameInput = document.getElementById('stockName');
         const searchButton = document.getElementById('searchButton');
         const searchResults = document.getElementById('searchResults');
-        const symbolInput = document.getElementById('symbol');
-        const fetchButton = document.getElementById('fetchButton');
-        const result = document.getElementById('result');
         const trendTableContainer = document.getElementById('trendTableContainer');
         const exportBtn = document.getElementById('exportBtn');
         const chartModal = document.getElementById('chartModal');
         const chartModalTitle = document.getElementById('chartModalTitle');
         const closeChartModalButton = document.getElementById('closeChartModalButton');
         const investorChartCanvas = document.getElementById('investorChart');
-        const dailyTradeModal = document.getElementById('dailyTradeModal');
-        const dailyTradeModalTitle = document.getElementById('dailyTradeModalTitle');
-        const closeDailyTradeModalButton = document.getElementById('closeDailyTradeModalButton');
-        const dailyTradeContent = document.getElementById('dailyTradeContent');
         const intradayBtn = document.getElementById('intradayBtn');
         const intradayModal = document.getElementById('intradayModal');
         const intradayModalTitle = document.getElementById('intradayModalTitle');
         const closeIntradayModalButton = document.getElementById('closeIntradayModalButton');
         const intradayChartCanvas = document.getElementById('intradayChart');
         const downloadDbCsvBtn = document.getElementById('downloadDbCsvBtn');
+        const trendDetailTab = document.getElementById('trendDetailTab');
+        const etfDetailTab = document.getElementById('etfDetailTab');
+        const trendDetailPanel = document.getElementById('trendDetailPanel');
+        const etfDetailPanel = document.getElementById('etfDetailPanel');
         let currentTrendRows = [];
         let currentIntradayRows = [];
         let currentIntradaySymbol = '';
+        let currentInstrumentMarket = '';
+        let currentSymbol = ''; // 현재 선택된 종목의 symbol
         let investorChart = null;
         let intradayChart = null;
         let grid = null;
+        let searchGrid = null;
+        const etfExportBtn = document.getElementById('etfExportBtn');
+        let etfGrid = null;
+        let currentEtfSymbol = '';
 
         function formatNumber(value) {
             return Number(value || 0).toLocaleString('ko-KR');
@@ -415,114 +776,522 @@
         }
 
         function initializeGrid() {
-            console.log('Initializing Toast UI Grid...');
+            console.log('Initializing AG Grid...');
             try {
-                grid = new tui.Grid({
-                    el: document.querySelector('#grid'),
-                    bodyHeight: 400,
-                    rowHeight: 42,
-                    scrollX: false,
-                    scrollY: true,
-                    columnOptions: {
-                        resizable: true,
+                // AG Grid 컬럼 정의
+                const columnDefs = [
+                    {
+                        headerName: '일자',
+                        field: 'normalized_date',
+                        width: 120,
+                        sortable: true,
+                        filter: true,
+                        cellStyle: { 'text-align': 'center' }
                     },
-                    columns: [
-                        {
-                            header: '일자',
-                            name: 'normalized_date',
-                            align: 'center',
-                            width: 120
-                        },
-                        {
-                            header: '종가',
-                            name: 'close_price',
-                            align: 'right',
-                            width: 120,
-                            className: 'plain-number-cell',
-                            formatter: createPlainNumberFormatter()
-                        },
-                        {
-                            header: '개인 순매수',
-                            name: 'personal_net_buy',
-                            align: 'right',
-                            width: 150,
-                            className: 'signed-number-cell',
-                            formatter: createSignedNumberFormatter()
-                        },
-                        {
-                            header: '외국인 순매수',
-                            name: 'foreign_net_buy',
-                            align: 'right',
-                            width: 150,
-                            className: 'signed-number-cell',
-                            formatter: createSignedNumberFormatter()
-                        },
-                        {
-                            header: '기관 순매수',
-                            name: 'institution_net_buy',
-                            align: 'right',
-                            width: 150,
-                            className: 'signed-number-cell',
-                            formatter: createSignedNumberFormatter()
-                        },
-                        {
-                            header: '거래량',
-                            name: 'volume',
-                            align: 'right',
-                            width: 150,
-                            className: 'plain-number-cell',
-                            formatter: createPlainNumberFormatter()
+                    {
+                        headerName: '종가',
+                        field: 'close_price',
+                        width: 120,
+                        sortable: true,
+                        filter: true,
+                        cellStyle: { 'text-align': 'right' },
+                        valueFormatter: (params) => formatNumber(params.value)
+                    },
+                    {
+                        headerName: '개인 순매수',
+                        field: 'personal_net_buy',
+                        width: 150,
+                        sortable: true,
+                        filter: true,
+                        cellStyle: { 'text-align': 'right' },
+                        valueFormatter: (params) => formatNumber(params.value),
+                        cellRenderer: (params) => {
+                            const value = params.value || 0;
+                            const color = value >= 0 ? '#f87171' : '#60a5fa';
+                            return `<span style="color: ${color}">${formatNumber(value)}</span>`;
                         }
-                    ],
-                    data: []
-                });
-
-                console.log('Toast UI Grid initialized successfully');
-                
-                // 그리드 행 클릭 이벤트
-                grid.on('click', (ev) => {
-                    console.log('Grid row clicked:', ev);
-                    if (ev.rowKey !== undefined) {
-                        const rowData = grid.getRow(ev.rowKey);
-                        console.log('Row data:', rowData);
-                        openDailyTradeModal(rowData);
+                    },
+                    {
+                        headerName: '외국인 순매수',
+                        field: 'foreign_net_buy',
+                        width: 150,
+                        sortable: true,
+                        filter: true,
+                        cellStyle: { 'text-align': 'right' },
+                        valueFormatter: (params) => formatNumber(params.value),
+                        cellRenderer: (params) => {
+                            const value = params.value || 0;
+                            const color = value >= 0 ? '#f87171' : '#60a5fa';
+                            return `<span style="color: ${color}">${formatNumber(value)}</span>`;
+                        }
+                    },
+                    {
+                        headerName: '기관 순매수',
+                        field: 'institution_net_buy',
+                        width: 150,
+                        sortable: true,
+                        filter: true,
+                        cellStyle: { 'text-align': 'right' },
+                        valueFormatter: (params) => formatNumber(params.value),
+                        cellRenderer: (params) => {
+                            const value = params.value || 0;
+                            const color = value >= 0 ? '#f87171' : '#60a5fa';
+                            return `<span style="color: ${color}">${formatNumber(value)}</span>`;
+                        }
+                    },
+                    {
+                        headerName: '거래량',
+                        field: 'volume',
+                        width: 150,
+                        sortable: true,
+                        filter: true,
+                        cellStyle: { 'text-align': 'right' },
+                        valueFormatter: (params) => formatNumber(params.value)
                     }
-                });
+                ];
+
+                // AG Grid 옵션
+                const gridOptions = {
+                    columnDefs: columnDefs,
+                    rowData: [],
+                    domLayout: 'normal',
+                    defaultColDef: {
+                        resizable: true,
+                        sortable: true,
+                        filter: true,
+                        minWidth: 100
+                    },
+                    enableCharts: false,
+                    rowHeight: 42,
+                    headerHeight: 40,
+                    suppressHorizontalScroll: false,
+                    suppressColumnVirtualisation: false,
+                    suppressRowVirtualisation: false,
+                    onGridReady: (params) => {
+                        console.log('AG Grid ready');
+                        // 약간의 지연 후 sizeColumnsToFit 호출
+                        setTimeout(() => {
+                            params.api.sizeColumnsToFit();
+                        }, 100);
+                    }
+                };
+
+                // AG Grid 생성
+                const gridDiv = document.querySelector('#grid');
+                gridDiv.classList.add('ag-theme-alpine');
+                gridDiv.style.height = '380px';
+                const gridApi = agGrid.createGrid(gridDiv, gridOptions);
+                
+                // 그리드와 API를 전역 변수에 저장
+                grid = {
+                    api: gridApi,
+                    gridOptions: gridOptions
+                };
+
+                console.log('AG Grid initialized successfully');
+                console.log('Grid API available:', !!grid.api);
             } catch (error) {
-                console.error('Error initializing grid:', error);
+                console.error('Error initializing AG Grid:', error);
             }
         }
 
-        function renderSearchResults(items) {
-            if (!items.length) {
-                searchResults.innerHTML = '';
+        function initializeEtfGrid() {
+            console.log('Initializing ETF AG Grid...');
+            try {
+                // AG Grid 컬럼 정의
+                const columnDefs = [
+                    {
+                        headerName: '종목명',
+                        field: 'stock_name',
+                        width: 200,
+                        sortable: true,
+                        filter: true,
+                        cellStyle: { 'text-align': 'left' }
+                    },
+                    {
+                        headerName: '편입비중',
+                        field: 'weight',
+                        width: 120,
+                        sortable: true,
+                        filter: true,
+                        cellStyle: { 'text-align': 'right' },
+                        valueFormatter: (params) => params.value ? `${params.value}%` : ''
+                    },
+                    {
+                        headerName: '현재가',
+                        field: 'current_price',
+                        width: 120,
+                        sortable: true,
+                        filter: true,
+                        cellStyle: { 'text-align': 'right' },
+                        valueFormatter: (params) => formatNumber(params.value)
+                    },
+                    {
+                        headerName: '전일대비',
+                        field: 'change',
+                        width: 120,
+                        sortable: true,
+                        filter: true,
+                        cellStyle: { 'text-align': 'right' },
+                        valueFormatter: (params) => {
+                            const value = params.value || 0;
+                            const formattedValue = formatNumber(Math.abs(value));
+                            return value >= 0 ? `▲${formattedValue}` : `▼${formattedValue}`;
+                        },
+                        cellRenderer: (params) => {
+                            const value = params.value || 0;
+                            const formattedValue = formatNumber(Math.abs(value));
+                            const color = value >= 0 ? '#f87171' : '#60a5fa';
+                            const arrow = value >= 0 ? '▲' : '▼';
+                            return `<span style="color: ${color}">${arrow}${formattedValue}</span>`;
+                        }
+                    },
+                    {
+                        headerName: '등락률',
+                        field: 'change_rate',
+                        width: 100,
+                        sortable: true,
+                        filter: true,
+                        cellStyle: { 'text-align': 'right' },
+                        valueFormatter: (params) => {
+                            const value = params.value || 0;
+                            const formattedValue = Math.abs(value).toFixed(2);
+                            return value >= 0 ? `+${formattedValue}%` : `-${formattedValue}%`;
+                        },
+                        cellRenderer: (params) => {
+                            const value = params.value || 0;
+                            const formattedValue = Math.abs(value).toFixed(2);
+                            const color = value >= 0 ? '#f87171' : '#60a5fa';
+                            const sign = value >= 0 ? '+' : '-';
+                            return `<span style="color: ${color}">${sign}${formattedValue}%</span>`;
+                        }
+                    }
+                ];
+
+                // AG Grid 옵션
+                const gridOptions = {
+                    columnDefs: columnDefs,
+                    rowData: [],
+                    domLayout: 'normal',
+                    defaultColDef: {
+                        resizable: true,
+                        sortable: true,
+                        filter: true,
+                        minWidth: 100
+                    },
+                    enableCharts: false,
+                    rowHeight: 42,
+                    headerHeight: 40,
+                    suppressHorizontalScroll: false,
+                    suppressColumnVirtualisation: false,
+                    suppressRowVirtualisation: false,
+                    onGridReady: (params) => {
+                        console.log('ETF AG Grid ready');
+                    },
+                    onRowDoubleClicked: (params) => {
+                        console.log('ETF Grid row double clicked:', params.data);
+                        
+                        const stockData = params.data;
+                        const stockCode = stockData.stock_code;
+                        const stockName = stockData.stock_name;
+                        
+                        // 종목코드가 없는 경우 (현금 등)
+                        if (!stockCode || stockCode.trim() === '') {
+                            alert('해당 항목은 개별 주식 조회를 지원하지 않습니다.');
+                            return;
+                        }
+                        
+                        // 메인 화면(주식 탭)으로 이동
+                        switchTab('stockTab');
+                        
+                        // 종목 검색 입력창에 종목명 또는 코드 설정
+                        stockNameInput.value = stockName;
+                        symbolInput.value = stockCode;
+                        
+                        // 일자별 매매동향 자동 조회
+                        setTimeout(() => {
+                            fetchAllData();
+                        }, 300);
+                    }
+                };
+
+                // AG Grid 생성
+                const gridDiv = document.querySelector('#etfGrid');
+                gridDiv.classList.add('ag-theme-alpine');
+                gridDiv.style.height = '400px';
+                const gridApi = agGrid.createGrid(gridDiv, gridOptions);
+                
+                // 그리드와 API를 전역 변수에 저장
+                etfGrid = {
+                    api: gridApi,
+                    gridOptions: gridOptions
+                };
+
+                console.log('ETF AG Grid initialized successfully');
+                console.log('ETF Grid API available:', !!etfGrid.api);
+            } catch (error) {
+                console.error('Error initializing ETF AG Grid:', error);
+            }
+        }
+
+        function initializeSearchGrids() {
+            console.log('Initializing search result grids...');
+            try {
+                // 주식 검색 결과 그리드
+                const searchColumnDefs = [
+                    {
+                        headerName: '종목코드',
+                        field: 'symbol',
+                        width: 100,
+                        sortable: true,
+                        cellStyle: { 'text-align': 'center' }
+                    },
+                    {
+                        headerName: '종목명',
+                        field: 'name',
+                        width: 200,
+                        sortable: true
+                    },
+                    {
+                        headerName: '시장',
+                        field: 'market',
+                        width: 80,
+                        sortable: true,
+                        cellStyle: { 'text-align': 'center' }
+                    }
+                ];
+
+                const searchGridOptions = {
+                    columnDefs: searchColumnDefs,
+                    rowData: [],
+                    domLayout: 'normal',
+                    defaultColDef: {
+                        resizable: true,
+                        sortable: true,
+                        filter: true
+                    },
+                    rowHeight: 35,
+                    headerHeight: 35,
+                    suppressHorizontalScroll: false,
+                    onGridReady: (params) => {
+                        console.log('Search Grid ready');
+                    },
+                    onCellClicked: (params) => {
+                        const data = params.data;
+                        currentInstrumentMarket = data.market || '';
+                        currentEtfSymbol = data.market === 'ETF' ? data.symbol : '';
+                        currentSymbol = data.symbol; // 현재 선택된 종목의 symbol 저장
+                        stockNameInput.value = data.name;
+                        
+                        // 직접 데이터 조회
+                        exportBtn.disabled = true;
+                        intradayBtn.disabled = true;
+                        currentTrendRows = [];
+                        
+                        fetchInvestorTrend(data.symbol).then(() => {
+                            updateEtfDetailVisibility();
+                            if (currentInstrumentMarket === 'ETF' && currentEtfSymbol) {
+                                fetchEtfConstituents().then(() => {
+                                    setDetailTab('etf');
+                                });
+                            } else {
+                                setDetailTab('trend');
+                            }
+                        }).catch(error => {
+                            console.error('Error fetching data:', error);
+                            if (grid && grid.api) {
+                                grid.api.setGridOption('rowData', []);
+                            }
+                            exportBtn.disabled = true;
+                            intradayBtn.disabled = true;
+                        }).finally(() => {
+                            exportBtn.disabled = false;
+                            intradayBtn.disabled = false;
+                        });
+                    }
+                };
+
+                const searchGridDiv = document.querySelector('#searchResults');
+                searchGridDiv.classList.add('ag-theme-alpine');
+                searchGridDiv.style.height = '200px';
+                const searchGridApi = agGrid.createGrid(searchGridDiv, searchGridOptions);
+                
+                searchGrid = {
+                    api: searchGridApi,
+                    gridOptions: searchGridOptions
+                };
+
+                console.log('Search grids initialized successfully');
+            } catch (error) {
+                console.error('Error initializing search grids:', error);
+            }
+        }
+
+        function setDetailTab(tabName) {
+            const showEtf = tabName === 'etf';
+            trendDetailTab.classList.toggle('active', !showEtf);
+            etfDetailTab.classList.toggle('active', showEtf);
+            trendDetailPanel.classList.toggle('active', !showEtf);
+            etfDetailPanel.classList.toggle('active', showEtf);
+            setTimeout(() => {
+                if (showEtf && etfGrid && etfGrid.api) {
+                    etfGrid.api.refreshCells();
+                    etfGrid.api.sizeColumnsToFit();
+                }
+                if (!showEtf && grid && grid.api) {
+                    grid.api.refreshCells();
+                }
+            }, 50);
+        }
+
+        function updateEtfDetailVisibility() {
+            const isEtf = currentInstrumentMarket === 'ETF' && !!currentEtfSymbol;
+            etfDetailTab.classList.toggle('hidden', !isEtf);
+            if (!isEtf) {
+                setDetailTab('trend');
+                if (etfGrid && etfGrid.api) {
+                    etfGrid.api.setGridOption('rowData', []);
+                }
+                etfExportBtn.disabled = true;
+            }
+        }
+
+        async function fetchEtfConstituents() {
+            const symbol = currentEtfSymbol;
+            if (!symbol) {
                 return;
             }
-            searchResults.innerHTML = items.map((item) => `
-                <div class="result-item" data-symbol="${item.symbol}" data-name="${item.name}">
-                    <strong>${item.name}</strong> (${item.symbol}) - ${item.market}
-                </div>
-            `).join('');
 
-            Array.from(searchResults.querySelectorAll('.result-item')).forEach((element) => {
-                element.addEventListener('click', () => {
-                    stockNameInput.value = element.dataset.name;
-                    symbolInput.value = element.dataset.symbol;
-                    fetchAllData();
-                });
+            etfExportBtn.disabled = true;
+
+            try {
+                const response = await fetch(`/api/etf-constituents?symbol=${encodeURIComponent(symbol)}`);
+                const data = await response.json();
+                
+                if (!response.ok || data.error) {
+                    throw new Error(data.error || 'ETF 구성종목 조회에 실패했습니다.');
+                }
+
+                if (!data.data || data.data.length === 0) {
+                    if (etfGrid && etfGrid.api) {
+                        etfGrid.api.setGridOption('rowData', []);
+                    }
+                    return;
+                }
+
+                // 편입비중 내림차순으로 정렬하여 표시
+                const sortedData = data.data.sort((a, b) => (b.weight || 0) - (a.weight || 0));
+                
+                if (etfGrid && etfGrid.api) {
+                    etfGrid.api.setGridOption('rowData', sortedData);
+                    setTimeout(() => {
+                        etfGrid.api.sizeColumnsToFit();
+                    }, 100);
+                    etfExportBtn.disabled = false;
+                }
+
+                console.log(`ETF ${symbol} 구성종목 ${data.count}개 로드 완료`);
+            } catch (error) {
+                console.error('Error fetching ETF constituents:', error);
+                if (etfGrid && etfGrid.api) {
+                    etfGrid.api.setGridOption('rowData', []);
+                }
+                alert(error.message);
+            }
+        }
+
+        function downloadCsv() {
+            if (!grid || !grid.api || !grid.api.getGridOption('rowData').length) {
+                return;
+            }
+            grid.api.exportDataAsCsv({
+                fileName: `매매동향_데이터_${symbolInput.value.trim() || 'unknown'}`,
             });
+        }
+
+        function downloadEtfCsv() {
+            if (!etfGrid || !etfGrid.api || !etfGrid.api.getGridOption('rowData').length) {
+                return;
+            }
+            etfGrid.api.exportDataAsCsv({
+                fileName: `ETF_편입종목_${currentEtfSymbol || 'unknown'}`,
+            });
+        }
+
+        function renderSearchResults(items) {
+            console.log('Rendering search results:', items.length, 'items');
+            console.log('Search grid object:', searchGrid);
+            console.log('Search grid API:', searchGrid ? searchGrid.api : 'undefined');
+            console.log('Search grid data:', items);
+            
+            if (!searchGrid) {
+                console.log('Search grid not initialized, initializing now...');
+                initializeSearchGrids();
+                // 초기화 후 다시 시도
+                setTimeout(() => {
+                    renderSearchResults(items);
+                }, 500);
+                return;
+            }
+            
+            if (!items.length) {
+                console.log('No search results to display');
+                if (searchGrid && searchGrid.api) {
+                    searchGrid.api.setGridOption('rowData', []);
+                }
+                return;
+            }
+            
+            try {
+                if (searchGrid && searchGrid.api) {
+                    console.log('Setting row data to search grid...');
+                    searchGrid.api.setGridOption('rowData', items);
+                    
+                    // 데이터 설정 확인 - 최신 API 사용
+                    const currentData = searchGrid.api.getGridOption('rowData');
+                    console.log('Current grid data after set:', currentData.length, 'rows');
+                    
+                    // 그리드가 실제로 보일 때까지 sizeColumnsToFit 호출 지연
+                    const checkGridVisibility = () => {
+                        // 여러 방법으로 그리드 요소 찾기 시도
+                        const gridElement = document.querySelector('#searchResults .ag-root-wrapper') ||
+                                          document.querySelector('#searchResults .ag-grid') ||
+                                          document.querySelector('#searchResults [class*="ag-"]') ||
+                                          document.querySelector('#searchResults');
+                        
+                        console.log('Checking grid visibility:', gridElement ? gridElement.offsetWidth + 'x' + gridElement.offsetHeight : 'not found');
+                        console.log('Grid element classes:', gridElement ? gridElement.className : 'none');
+                        
+                        if (gridElement && gridElement.offsetWidth > 0 && gridElement.offsetHeight > 0) {
+                            console.log('Grid is visible, but skipping sizeColumnsToFit to avoid warnings');
+                            // sizeColumnsToFit 대신 고정 너비 사용
+                            searchGrid.api.autoSizeColumns();
+                        } else {
+                            console.log('Grid not yet visible, retrying...');
+                            setTimeout(checkGridVisibility, 100);
+                        }
+                    };
+                    setTimeout(checkGridVisibility, 100);
+                    console.log('Search results rendered successfully');
+                } else {
+                    console.error('Search grid API not available');
+                }
+            } catch (error) {
+                console.error('Error rendering search results:', error);
+            }
         }
 
         async function searchStockByName() {
             const name = stockNameInput.value.trim();
             if (!name) {
-                result.innerHTML = '<div class="label error">오류</div><div class="value error">종목명을 입력해 주세요.</div>';
+                alert('종목명을 입력해 주세요.');
                 return;
             }
 
             searchButton.disabled = true;
-            searchResults.innerHTML = '';
-            result.innerHTML = '<div class="label">상태</div><div class="value">종목 검색 중...</div>';
+            if (searchGrid && searchGrid.api) {
+                searchGrid.api.setGridOption('rowData', []);
+            }
 
             try {
                 const response = await fetch(`/api/stocks/search?name=${encodeURIComponent(name)}`);
@@ -531,30 +1300,11 @@
                     throw new Error(data.detail || '종목 검색에 실패했습니다.');
                 }
                 renderSearchResults(data.items || []);
-                if (data.items && data.items.length === 1) {
-                    symbolInput.value = data.items[0].symbol;
-                }
-                result.innerHTML = `<div class="label">검색 결과</div><div class="value">${data.count}건</div>`;
             } catch (error) {
-                result.innerHTML = `<div class="label error">오류</div><div class="value error">${error.message}</div>`;
+                alert(error.message);
             } finally {
                 searchButton.disabled = false;
             }
-        }
-
-        async function fetchQuote() {
-            const symbol = symbolInput.value.trim();
-            const response = await fetch(`/api/quote?symbol=${encodeURIComponent(symbol)}`);
-            const data = await response.json();
-            if (!response.ok) {
-                throw new Error(data.detail || '현재가 조회에 실패했습니다.');
-            }
-            result.innerHTML = `
-                <div class="label">종목</div>
-                <div class="value">${data.symbol} ${data.name ? `(${data.name})` : ''}</div>
-                <div class="label" style="margin-top:14px;">현재가</div>
-                <div class="value">${formatNumber(data.current_price)}원</div>
-            `;
         }
 
         function normalizeTrendDate(value) {
@@ -579,8 +1329,8 @@
             
             if (!rows.length) {
                 console.log('No rows to display');
-                if (grid) {
-                    grid.resetData([]);
+                if (grid && grid.api) {
+                    grid.api.setGridOption('rowData', []);
                 }
                 exportBtn.disabled = true;
                 return;
@@ -591,24 +1341,37 @@
                 ...row,
                 normalized_date: normalizeTrendDate(row.date),
                 close_price: row.close_price || 0,
+                volume: row.volume || 0,
             }));
             
-            console.log('Resetting grid data with', processedRows.length, 'rows');
+            console.log('Setting AG Grid data with', processedRows.length, 'rows');
+            console.log('Grid object:', grid);
+            console.log('Grid API:', grid ? grid.api : 'undefined');
+            
             try {
-                grid.resetData(processedRows);
-                grid.refreshLayout();
-                exportBtn.disabled = false;
-                intradayBtn.disabled = false;
-                console.log('Grid data reset successful');
+                if (grid && grid.api) {
+                    grid.api.setGridOption('rowData', processedRows);
+                    setTimeout(() => {
+                        grid.api.sizeColumnsToFit();
+                    }, 100);
+                    exportBtn.disabled = false;
+                    intradayBtn.disabled = false;
+                    console.log('AG Grid data set successful');
+                } else {
+                    console.error('Grid or Grid API is not available');
+                }
             } catch (error) {
-                console.error('Error resetting grid data:', error);
+                console.error('Error setting AG Grid data:', error);
             }
         }
 
-        async function fetchInvestorTrend() {
-            const symbol = symbolInput.value.trim();
-            console.log('Fetching investor trend for symbol:', symbol);
-            const response = await fetch(`/api/investor-trend?symbol=${encodeURIComponent(symbol)}`);
+        async function fetchInvestorTrend(symbol = null) {
+            const targetSymbol = symbol || currentEtfSymbol || '';
+            if (!targetSymbol) {
+                throw new Error('종목 코드가 없습니다.');
+            }
+            console.log('Fetching investor trend for symbol:', targetSymbol);
+            const response = await fetch(`/api/investor-trend?symbol=${encodeURIComponent(targetSymbol)}`);
             console.log('Response status:', response.status);
             const data = await response.json();
             console.log('Response data:', data);
@@ -622,23 +1385,28 @@
         async function fetchAllData() {
             const symbol = symbolInput.value.trim();
             if (!symbol) {
-                result.innerHTML = '<div class="label error">오류</div><div class="value error">종목 코드를 입력하거나 종목명을 검색해 주세요.</div>';
+                alert('종목을 검색해 주세요.');
                 return;
             }
 
             console.log('Fetching all data for symbol:', symbol);
-            fetchButton.disabled = true;
             exportBtn.disabled = true;
             intradayBtn.disabled = true;
             currentTrendRows = [];
 
             try {
-                await fetchQuote();
                 await fetchInvestorTrend();
+                updateEtfDetailVisibility();
+                if (currentInstrumentMarket === 'ETF' && currentEtfSymbol) {
+                    await fetchEtfConstituents();
+                    setDetailTab('etf');
+                } else {
+                    setDetailTab('trend');
+                }
             } catch (error) {
                 console.error('Error in fetchAllData:', error);
-                if (grid) {
-                    grid.resetData([]);
+                if (grid && grid.api) {
+                    grid.api.setGridOption('rowData', []);
                 }
                 exportBtn.disabled = true;
                 intradayBtn.disabled = true;
@@ -647,7 +1415,7 @@
                     investorChart = null;
                 }
             } finally {
-                fetchButton.disabled = false;
+                // fetchButton 제거됨
             }
         }
 
@@ -673,81 +1441,15 @@
             chartModal.classList.remove('open');
         }
 
-        function openDailyTradeModal(trendRow) {
-            console.log('Opening daily trade modal with:', trendRow);
-            dailyTradeModalTitle.textContent = `${trendRow.normalized_date} 일자별 거래 현황`;
-            dailyTradeContent.innerHTML = `
-                <div style="display: grid; gap: 20px;">
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
-                        <div style="background: #111827; padding: 16px; border-radius: 12px; border: 1px solid #1f2937;">
-                            <div style="color: #94a3b8; font-size: 14px; margin-bottom: 8px;">일자</div>
-                            <div style="color: #e2e8f0; font-size: 18px; font-weight: 700;">${trendRow.normalized_date}</div>
-                        </div>
-                        <div style="background: #111827; padding: 16px; border-radius: 12px; border: 1px solid #1f2937;">
-                            <div style="color: #94a3b8; font-size: 14px; margin-bottom: 8px;">종목코드</div>
-                            <div style="color: #e2e8f0; font-size: 18px; font-weight: 700;">${trendRow.symbol}</div>
-                        </div>
-                        <div style="background: #111827; padding: 16px; border-radius: 12px; border: 1px solid #1f2937;">
-                            <div style="color: #94a3b8; font-size: 14px; margin-bottom: 8px;">종가</div>
-                            <div style="color: #e2e8f0; font-size: 18px; font-weight: 700;">${formatNumber(trendRow.close_price)}원</div>
-                        </div>
-                        <div style="background: #111827; padding: 16px; border-radius: 12px; border: 1px solid #1f2937;">
-                            <div style="color: #94a3b8; font-size: 14px; margin-bottom: 8px;">거래량</div>
-                            <div style="color: #e2e8f0; font-size: 18px; font-weight: 700;">${formatNumber(trendRow.volume)}</div>
-                        </div>
-                    </div>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px;">
-                        <div style="background: #111827; padding: 20px; border-radius: 12px; border: 1px solid #1f2937;">
-                            <div style="color: #94a3b8; font-size: 14px; margin-bottom: 12px;">개인 순매수</div>
-                            <div style="color: ${Number(trendRow.personal_net_buy || 0) >= 0 ? '#f87171' : '#60a5fa'}; font-size: 24px; font-weight: 700;">${formatNumber(trendRow.personal_net_buy)}</div>
-                            <div style="color: #94a3b8; font-size: 12px; margin-top: 8px;">${Number(trendRow.personal_net_buy || 0) >= 0 ? '순매수' : '순매도'}</div>
-                        </div>
-                        <div style="background: #111827; padding: 20px; border-radius: 12px; border: 1px solid #1f2937;">
-                            <div style="color: #94a3b8; font-size: 14px; margin-bottom: 12px;">외국인 순매수</div>
-                            <div style="color: ${Number(trendRow.foreign_net_buy || 0) >= 0 ? '#f87171' : '#60a5fa'}; font-size: 24px; font-weight: 700;">${formatNumber(trendRow.foreign_net_buy)}</div>
-                            <div style="color: #94a3b8; font-size: 12px; margin-top: 8px;">${Number(trendRow.foreign_net_buy || 0) >= 0 ? '순매수' : '순매도'}</div>
-                        </div>
-                        <div style="background: #111827; padding: 20px; border-radius: 12px; border: 1px solid #1f2937;">
-                            <div style="color: #94a3b8; font-size: 14px; margin-bottom: 12px;">기관 순매수</div>
-                            <div style="color: ${Number(trendRow.institution_net_buy || 0) >= 0 ? '#f87171' : '#60a5fa'}; font-size: 24px; font-weight: 700;">${formatNumber(trendRow.institution_net_buy)}</div>
-                            <div style="color: #94a3b8; font-size: 12px; margin-top: 8px;">${Number(trendRow.institution_net_buy || 0) >= 0 ? '순매수' : '순매도'}</div>
-                        </div>
-                    </div>
-                    <div style="background: #111827; padding: 20px; border-radius: 12px; border: 1px solid #1f2937;">
-                        <div style="color: #94a3b8; font-size: 14px; margin-bottom: 16px;">투자자별 매매 요약</div>
-                        <div style="display: grid; gap: 12px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #1f2937;">
-                                <span style="color: #cbd5e1;">총 순매수</span>
-                                <span style="color: #e2e8f0; font-weight: 700;">${formatNumber(Number(trendRow.personal_net_buy || 0) + Number(trendRow.foreign_net_buy || 0) + Number(trendRow.institution_net_buy || 0))}</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0;">
-                                <span style="color: #cbd5e1;">가장 많이 산 투자자</span>
-                                <span style="color: #22c55e; font-weight: 700;">${getTopBuyer(trendRow)}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            dailyTradeModal.classList.add('open');
-        }
-
-        function closeDailyTradeModal() {
-            dailyTradeModal.classList.remove('open');
-        }
-
-        function getTopBuyer(trendRow) {
-            const investors = [
-                { name: '개인', value: Number(trendRow.personal_net_buy || 0) },
-                { name: '외국인', value: Number(trendRow.foreign_net_buy || 0) },
-                { name: '기관', value: Number(trendRow.institution_net_buy || 0) }
-            ];
-            const topBuyer = investors.reduce((max, investor) => investor.value > max.value ? investor : max);
-            return topBuyer.value > 0 ? `${topBuyer.name} (${formatNumber(topBuyer.value)})` : '없음';
+        function closeIntradayModal() {
+            intradayModal.classList.remove('open');
         }
 
         async function fetchIntradayData() {
-            const symbol = symbolInput.value.trim();
+            // 현재 선택된 종목의 symbol을 가져옴
+            const symbol = currentSymbol || '';
             if (!symbol) {
+                alert('종목을 먼저 선택해주세요.');
                 return;
             }
             intradayBtn.disabled = true;
@@ -906,26 +1608,84 @@
             });
         }
 
-        function closeIntradayModal() {
-            intradayModal.classList.remove('open');
-        }
-
         searchButton.addEventListener('click', searchStockByName);
-        fetchButton.addEventListener('click', fetchAllData);
         exportBtn.addEventListener('click', downloadCsv);
         intradayBtn.addEventListener('click', fetchIntradayData);
         downloadDbCsvBtn.addEventListener('click', downloadDbCsv);
         closeChartModalButton.addEventListener('click', closeChartModal);
-        closeDailyTradeModalButton.addEventListener('click', closeDailyTradeModal);
         closeIntradayModalButton.addEventListener('click', closeIntradayModal);
+        
+        // ETF 이벤트 리스너
+        etfExportBtn.addEventListener('click', downloadEtfCsv);
+        trendDetailTab.addEventListener('click', () => setDetailTab('trend'));
+        etfDetailTab.addEventListener('click', () => {
+            if (!etfDetailTab.classList.contains('hidden')) {
+                setDetailTab('etf');
+            }
+        });
+        
+        // 탭 전환 기능
+        function switchTab(tabId) {
+            console.log('Switching to tab:', tabId);
+            
+            // 모든 탭 컨텐츠 숨기기
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+                console.log('Removed active from tab:', tab.id);
+            });
+            // 모든 네비게이션 아이템 비활성화
+            document.querySelectorAll('.nav-item').forEach(nav => {
+                nav.classList.remove('active');
+                console.log('Removed active from nav:', nav.getAttribute('data-tab'));
+            });
+            
+            // 선택한 탭 표시
+            const selectedTab = document.getElementById(tabId);
+            if (selectedTab) {
+                selectedTab.classList.add('active');
+                console.log('Added active to tab:', tabId);
+            } else {
+                console.error('Tab not found:', tabId);
+                return;
+            }
+            
+            // 선택한 네비게이션 활성화
+            const selectedNav = document.querySelector(`.nav-item[data-tab="${tabId}"]`);
+            if (selectedNav) {
+                selectedNav.classList.add('active');
+                console.log('Added active to nav:', tabId);
+            } else {
+                console.error('Nav item not found:', tabId);
+            }
+            
+            // 탭 전환 시 그리드 레이아웃 새로고침
+            setTimeout(() => {
+                if (grid) {
+                    grid.api.refreshCells();
+                }
+                if (etfGrid) {
+                    etfGrid.api.refreshCells();
+                }
+                if (searchGrid) {
+                    searchGrid.api.refreshCells();
+                }
+                console.log('Grid layouts refreshed after tab switch');
+            }, 50);
+        }
+        
+        // 네비게이션 클릭 이벤트
+        document.querySelectorAll('.nav-item').forEach(navItem => {
+            console.log('Setting up nav item:', navItem.getAttribute('data-tab'));
+            navItem.addEventListener('click', (event) => {
+                console.log('Nav item clicked:', navItem.getAttribute('data-tab'));
+                const tabId = navItem.getAttribute('data-tab');
+                switchTab(tabId);
+            });
+        });
+        
         chartModal.addEventListener('click', (event) => {
             if (event.target === chartModal) {
                 closeChartModal();
-            }
-        });
-        dailyTradeModal.addEventListener('click', (event) => {
-            if (event.target === dailyTradeModal) {
-                closeDailyTradeModal();
             }
         });
         intradayModal.addEventListener('click', (event) => {
@@ -938,15 +1698,12 @@
                 searchStockByName();
             }
         });
-        symbolInput.addEventListener('keydown', (event) => {
-            if (event.key === 'Enter') {
-                fetchAllData();
-            }
-        });
         
         // 페이지 로드 시 그리드 초기화
         document.addEventListener('DOMContentLoaded', () => {
             initializeGrid();
+            initializeEtfGrid();
+            initializeSearchGrids();
         });
     </script>
 </body>
