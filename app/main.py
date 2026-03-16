@@ -649,7 +649,7 @@ def get_account_balance() -> dict[str, Any]:
         "authorization": f"Bearer {access_token}",
         "appkey": settings.kis_app_key,
         "appsecret": settings.kis_app_secret,
-        "tr_id": "VTTC8434R",
+        "tr_id": "TTTC8434R",
     }
     params = {
         "CANO": account_num[:8],
@@ -757,82 +757,24 @@ def read_stock_search(name: str = Query(..., min_length=1, max_length=50)) -> di
 def read_investor_trend(symbol: str = Query(..., min_length=6, max_length=6)) -> dict[str, Any]:
     try:
         return get_investor_trend(symbol)
-    except HTTPException:
-        sample_data = []
-        for i in range(10):
-            date = (datetime.datetime.now() - datetime.timedelta(days=i)).strftime("%Y-%m-%d")
-            sample_data.append({
-                "date": date.replace("-", ""),
-                "symbol": symbol,
-                "open_price": 0,
-                "close_price": 0,
-                "personal_net_buy": 0,
-                "foreign_net_buy": 0,
-                "institution_net_buy": 0,
-                "volume": 0,
-            })
-        return {"symbol": symbol, "data": sample_data}
+    except HTTPException as e:
+        raise e
 
 
 @app.get("/api/investor-intraday")
 def read_investor_intraday(symbol: str = Query(..., min_length=6, max_length=6)) -> dict[str, Any]:
     try:
         return get_investor_intraday(symbol)
-    except HTTPException:
-        import random
-
-        mock_data = []
-        hours = ["09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30"]
-        cum_personal = 0
-        cum_foreign = 0
-        cum_institution = 0
-        for t in hours:
-            cum_personal += random.randint(-500, 800)
-            cum_foreign += random.randint(-600, 700)
-            cum_institution += random.randint(-400, 600)
-            mock_data.append({
-                "time": t,
-                "personal_net_buy": cum_personal,
-                "foreign_net_buy": cum_foreign,
-                "institution_net_buy": cum_institution,
-            })
-        return {"symbol": symbol, "data": mock_data}
+    except HTTPException as e:
+        raise e
 
 
 @app.get("/api/account/balance")
 def read_account_balance() -> dict[str, Any]:
     try:
         return get_account_balance()
-    except HTTPException:
-        mock_holdings = [
-            {
-                "pdno": "005930",
-                "prdt_name": "삼성전자",
-                "hldg_qty": 12,
-                "pchs_avg_pric": 71000,
-                "prpr": 73500,
-                "evlu_pfls_amt": 30000,
-                "evlu_pfls_rt": 3.52,
-            },
-            {
-                "pdno": "000660",
-                "prdt_name": "SK하이닉스",
-                "hldg_qty": 4,
-                "pchs_avg_pric": 182000,
-                "prpr": 176500,
-                "evlu_pfls_amt": -22000,
-                "evlu_pfls_rt": -3.02,
-            },
-        ]
-        return {
-            "output1": mock_holdings,
-            "output2": {
-                "tot_pchs_amt": 1580000,
-                "tot_evlu_amt": 1588000,
-                "tot_evlu_pfls_amt": 8000,
-                "dnca_tot_amt": 3250000,
-            },
-        }
+    except HTTPException as e:
+        raise e
 
 
 @app.get("/api/health")
