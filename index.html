@@ -258,14 +258,18 @@
             border: 1px solid #334155;
             border-radius: 20px;
             padding: 20px;
-            box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+        }
+        .search-modal-content {
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
         }
         .intraday-modal-content {
-            max-width: min(1400px, 96vw);
-            width: 96vw;
-            height: min(88vh, 980px);
-            display: flex;
-            flex-direction: column;
+            max-width: 1200px;
+            width: 90vw;
+            max-height: 90vh;
         }
         .intraday-chart-box {
             flex: 1;
@@ -392,6 +396,35 @@
         .export-button:disabled {
             opacity: 0.6;
             cursor: not-allowed;
+        }
+        .account-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .summary-card {
+            background: #1e293b;
+            border: 1px solid rgba(71, 85, 105, 0.55);
+            border-radius: 20px;
+            padding: 18px;
+        }
+        .summary-card-label {
+            color: #94a3b8;
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .summary-card-value {
+            color: #e2e8f0;
+            font-size: 22px;
+            font-weight: 800;
+        }
+        .summary-card-value.positive {
+            color: #f87171;
+        }
+        .summary-card-value.negative {
+            color: #60a5fa;
         }
         /* Toast UI Grid 다크 테마 */
         .tui-grid {
@@ -646,7 +679,6 @@
                     <input id="stockName" type="text" placeholder="종목명 검색 (예: 삼성전자)" maxlength="50" />
                     <button id="searchButton">검색</button>
                 </div>
-                <div id="searchResults" class="results-grid"></div>
             </div>
             <div class="detail-tabs">
                 <button id="trendDetailTab" class="detail-tab active" type="button">일자별 투자자 매매동향</button>
@@ -681,8 +713,34 @@
 
         <div id="myTab" class="tab-content">
             <div class="panel">
-                <div class="section-title">My</div>
-                <div style="color: #94a3b8;">준비 중입니다.</div>
+                <div class="section-title">내 계좌</div>
+                <div class="grid-container">
+                    <div class="grid-header">
+                        <div class="grid-title">계좌 잔고 현황</div>
+                        <button id="refreshBalanceBtn" class="export-button">새로고침</button>
+                    </div>
+                    <div class="grid-body" style="padding: 18px;">
+                        <div class="account-summary-grid">
+                            <div class="summary-card">
+                                <div class="summary-card-label">총 매입금액</div>
+                                <div id="totalPurchaseAmount" class="summary-card-value">0원</div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="summary-card-label">총 평가금액</div>
+                                <div id="totalEvalAmount" class="summary-card-value">0원</div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="summary-card-label">총 평가손익</div>
+                                <div id="totalProfitLoss" class="summary-card-value">0원</div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="summary-card-label">추정예탁자산</div>
+                                <div id="depositAssetAmount" class="summary-card-value">0원</div>
+                            </div>
+                        </div>
+                        <div id="balanceGrid" style="height: 420px;"></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -715,6 +773,16 @@
         </div>
     </div>
 
+    <div id="searchModal" class="modal-overlay">
+        <div class="modal-content search-modal-content">
+            <div class="modal-header">
+                <div id="searchModalTitle" class="modal-title">종목 검색 결과</div>
+                <button id="closeSearchModalButton" class="close-button">닫기</button>
+            </div>
+            <div id="searchResults" class="results-grid"></div>
+        </div>
+    </div>
+
     <div id="intradayModal" class="modal-overlay">
         <div class="modal-content intraday-modal-content">
             <div class="modal-header">
@@ -736,6 +804,9 @@
         const stockNameInput = document.getElementById('stockName');
         const searchButton = document.getElementById('searchButton');
         const searchResults = document.getElementById('searchResults');
+        const searchModal = document.getElementById('searchModal');
+        const searchModalTitle = document.getElementById('searchModalTitle');
+        const closeSearchModalButton = document.getElementById('closeSearchModalButton');
         const trendTableContainer = document.getElementById('trendTableContainer');
         const exportBtn = document.getElementById('exportBtn');
         const chartModal = document.getElementById('chartModal');
@@ -752,6 +823,11 @@
         const etfDetailTab = document.getElementById('etfDetailTab');
         const trendDetailPanel = document.getElementById('trendDetailPanel');
         const etfDetailPanel = document.getElementById('etfDetailPanel');
+        const refreshBalanceBtn = document.getElementById('refreshBalanceBtn');
+        const totalPurchaseAmount = document.getElementById('totalPurchaseAmount');
+        const totalEvalAmount = document.getElementById('totalEvalAmount');
+        const totalProfitLoss = document.getElementById('totalProfitLoss');
+        const depositAssetAmount = document.getElementById('depositAssetAmount');
         let currentTrendRows = [];
         let currentIntradayRows = [];
         let currentIntradaySymbol = '';
@@ -763,6 +839,7 @@
         let searchGrid = null;
         const etfExportBtn = document.getElementById('etfExportBtn');
         let etfGrid = null;
+        let balanceGrid = null;
         let currentEtfSymbol = '';
 
         function formatNumber(value) {
@@ -1036,6 +1113,103 @@
             }
         }
 
+        function initializeBalanceGrid() {
+            try {
+                const columnDefs = [
+                    {
+                        headerName: '종목명',
+                        field: 'prdt_name',
+                        flex: 1,
+                        minWidth: 150,
+                        sortable: true,
+                        filter: true,
+                    },
+                    {
+                        headerName: '보유수량',
+                        field: 'hldg_qty',
+                        width: 110,
+                        sortable: true,
+                        filter: true,
+                        cellStyle: { 'text-align': 'right' },
+                        valueFormatter: (params) => formatNumber(params.value),
+                    },
+                    {
+                        headerName: '매입단가',
+                        field: 'pchs_avg_pric',
+                        width: 120,
+                        sortable: true,
+                        filter: true,
+                        cellStyle: { 'text-align': 'right' },
+                        valueFormatter: (params) => formatNumber(params.value),
+                    },
+                    {
+                        headerName: '현재가',
+                        field: 'prpr',
+                        width: 120,
+                        sortable: true,
+                        filter: true,
+                        cellStyle: { 'text-align': 'right' },
+                        valueFormatter: (params) => formatNumber(params.value),
+                    },
+                    {
+                        headerName: '평가손익',
+                        field: 'evlu_pfls_amt',
+                        width: 130,
+                        sortable: true,
+                        filter: true,
+                        cellStyle: { 'text-align': 'right' },
+                        cellRenderer: (params) => {
+                            const value = Number(params.value || 0);
+                            const color = value >= 0 ? '#f87171' : '#60a5fa';
+                            return `<span style="color:${color};font-weight:700;">${formatNumber(value)}</span>`;
+                        },
+                    },
+                    {
+                        headerName: '수익률',
+                        field: 'evlu_pfls_rt',
+                        width: 110,
+                        sortable: true,
+                        filter: true,
+                        cellStyle: { 'text-align': 'right' },
+                        cellRenderer: (params) => {
+                            const value = Number(params.value || 0);
+                            const color = value >= 0 ? '#f87171' : '#60a5fa';
+                            return `<span style="color:${color};font-weight:700;">${value.toFixed(2)}%</span>`;
+                        },
+                    },
+                ];
+
+                const gridOptions = {
+                    columnDefs: columnDefs,
+                    rowData: [],
+                    domLayout: 'normal',
+                    defaultColDef: {
+                        resizable: true,
+                        sortable: true,
+                        filter: true,
+                        minWidth: 100,
+                    },
+                    rowHeight: 42,
+                    headerHeight: 40,
+                    onGridReady: (params) => {
+                        setTimeout(() => {
+                            params.api.sizeColumnsToFit();
+                        }, 100);
+                    },
+                };
+
+                const gridDiv = document.querySelector('#balanceGrid');
+                gridDiv.classList.add('ag-theme-alpine');
+                const gridApi = agGrid.createGrid(gridDiv, gridOptions);
+                balanceGrid = {
+                    api: gridApi,
+                    gridOptions: gridOptions,
+                };
+            } catch (error) {
+                console.error('Error initializing balance AG Grid:', error);
+            }
+        }
+
         function initializeSearchGrids() {
             console.log('Initializing search result grids...');
             try {
@@ -1084,6 +1258,9 @@
                         currentEtfSymbol = data.market === 'ETF' ? data.symbol : '';
                         currentSymbol = data.symbol; // 현재 선택된 종목의 symbol 저장
                         stockNameInput.value = data.name;
+                        
+                        // 검색 모달 닫기
+                        searchModal.classList.remove('open');
                         
                         // 직접 데이터 조회
                         exportBtn.disabled = true;
@@ -1155,6 +1332,48 @@
                     etfGrid.api.setGridOption('rowData', []);
                 }
                 etfExportBtn.disabled = true;
+            }
+        }
+
+        function setSummaryValue(element, value, signed = false) {
+            const numericValue = Number(value || 0);
+            element.textContent = `${formatNumber(numericValue)}원`;
+            element.classList.remove('positive', 'negative');
+            if (signed) {
+                element.classList.add(numericValue >= 0 ? 'positive' : 'negative');
+            }
+        }
+
+        function renderAccountBalance(data) {
+            const summary = data.output2 || {};
+            const items = data.output1 || [];
+            setSummaryValue(totalPurchaseAmount, summary.tot_pchs_amt || 0);
+            setSummaryValue(totalEvalAmount, summary.tot_evlu_amt || 0);
+            setSummaryValue(totalProfitLoss, summary.tot_evlu_pfls_amt || 0, true);
+            setSummaryValue(depositAssetAmount, summary.dnca_tot_amt || 0);
+
+            if (balanceGrid && balanceGrid.api) {
+                balanceGrid.api.setGridOption('rowData', items);
+                setTimeout(() => {
+                    balanceGrid.api.sizeColumnsToFit();
+                }, 100);
+            }
+        }
+
+        async function fetchAccountBalance() {
+            refreshBalanceBtn.disabled = true;
+            try {
+                const response = await fetch('/api/account/balance');
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.detail || '계좌 잔고 조회에 실패했습니다.');
+                }
+                renderAccountBalance(data);
+            } catch (error) {
+                console.error('Error fetching account balance:', error);
+                alert(error.message);
+            } finally {
+                refreshBalanceBtn.disabled = false;
             }
         }
 
@@ -1301,7 +1520,13 @@
                 if (!response.ok) {
                     throw new Error(data.detail || '종목 검색에 실패했습니다.');
                 }
-                renderSearchResults(data.items || []);
+                if (data.items && data.items.length > 0) {
+                    searchModalTitle.textContent = `"${name}" 검색 결과 (${data.items.length}개)`;
+                    renderSearchResults(data.items);
+                    searchModal.classList.add('open');
+                } else {
+                    alert('검색 결과가 없습니다.');
+                }
             } catch (error) {
                 alert(error.message);
             } finally {
@@ -1419,6 +1644,10 @@
             } finally {
                 // fetchButton 제거됨
             }
+        }
+
+        function closeSearchModal() {
+            searchModal.classList.remove('open');
         }
 
         function downloadCsv() {
@@ -1561,7 +1790,7 @@
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: true,
+                    maintainAspectRatio: false,
                     interaction: {
                         mode: 'index',
                         intersect: false,
@@ -1611,9 +1840,11 @@
         }
 
         searchButton.addEventListener('click', searchStockByName);
+        closeSearchModalButton.addEventListener('click', closeSearchModal);
         exportBtn.addEventListener('click', downloadCsv);
         intradayBtn.addEventListener('click', fetchIntradayData);
         downloadDbCsvBtn.addEventListener('click', downloadDbCsv);
+        refreshBalanceBtn.addEventListener('click', fetchAccountBalance);
         closeChartModalButton.addEventListener('click', closeChartModal);
         closeIntradayModalButton.addEventListener('click', closeIntradayModal);
         
@@ -1671,8 +1902,16 @@
                 if (searchGrid) {
                     searchGrid.api.refreshCells();
                 }
+                if (balanceGrid) {
+                    balanceGrid.api.refreshCells();
+                    balanceGrid.api.sizeColumnsToFit();
+                }
                 console.log('Grid layouts refreshed after tab switch');
             }, 50);
+
+            if (tabId === 'myTab') {
+                fetchAccountBalance();
+            }
         }
         
         // 네비게이션 클릭 이벤트
@@ -1695,6 +1934,11 @@
                 closeIntradayModal();
             }
         });
+        searchModal.addEventListener('click', (event) => {
+            if (event.target === searchModal) {
+                closeSearchModal();
+            }
+        });
         stockNameInput.addEventListener('keydown', (event) => {
             if (event.key === 'Enter') {
                 searchStockByName();
@@ -1706,6 +1950,7 @@
             initializeGrid();
             initializeEtfGrid();
             initializeSearchGrids();
+            initializeBalanceGrid();
         });
     </script>
 </body>

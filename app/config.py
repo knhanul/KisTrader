@@ -13,6 +13,7 @@ class Settings:
     kis_app_key: str = os.getenv("KIS_APP_KEY", "")
     kis_app_secret: str = os.getenv("KIS_APP_SECRET", "")
     kis_account_no: str = os.getenv("KIS_ACCOUNT_NO", "")
+    kis_account_num: str = os.getenv("KIS_ACCOUNT_NUM", os.getenv("KIS_ACCOUNT_NO", ""))
     kis_base_url: str = os.getenv("KIS_BASE_URL", "https://openapi.koreainvestment.com:9443")
     stock_cache_file: str = os.getenv("STOCK_CACHE_FILE", str(BASE_DIR / "stocks_cache.json"))
     token_cache_file: str = os.getenv("TOKEN_CACHE_FILE", str(BASE_DIR / "token_cache.json"))

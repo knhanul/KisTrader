@@ -33,6 +33,16 @@ def validate_settings() -> None:
         raise HTTPException(status_code=500, detail="KIS_APP_KEY 또는 KIS_APP_SECRET 환경변수가 설정되지 않았습니다.")
 
 
+def validate_account_settings() -> str:
+    account_num = settings.kis_account_num or settings.kis_account_no
+    if not account_num:
+        raise HTTPException(status_code=500, detail="KIS_ACCOUNT_NUM 환경변수가 설정되지 않았습니다.")
+    account_num = str(account_num).strip()
+    if len(account_num) != 10 or not account_num.isdigit():
+        raise HTTPException(status_code=500, detail="KIS_ACCOUNT_NUM은 10자리 숫자여야 합니다.")
+    return account_num
+
+
 def save_token_cache(token: str, timestamp: float) -> None:
     try:
         cache_data = {"access_token": token, "timestamp": timestamp}
@@ -630,6 +640,80 @@ def get_investor_intraday(symbol: str) -> dict[str, Any]:
     return {"symbol": symbol, "data": result}
 
 
+def get_account_balance() -> dict[str, Any]:
+    access_token = issue_access_token()
+    account_num = validate_account_settings()
+    url = f"{settings.kis_base_url}/uapi/domestic-stock/v1/trading/inquire-balance"
+    headers = {
+        "content-type": "application/json; charset=utf-8",
+        "authorization": f"Bearer {access_token}",
+        "appkey": settings.kis_app_key,
+        "appsecret": settings.kis_app_secret,
+        "tr_id": "VTTC8434R",
+    }
+    params = {
+        "CANO": account_num[:8],
+        "ACNT_PRDT_CD": account_num[8:],
+        "AFHR_FLPR_YN": "N",
+        "OFL_YN": "N",
+        "INQR_DVSN": "02",
+        "UNPR_DVSN": "01",
+        "FUND_STTL_ICLD_YN": "N",
+        "FNCG_AMT_AUTO_RDPT_YN": "N",
+        "PRCS_DVSN": "00",
+        "CTX_AREA_FK100": "",
+        "CTX_AREA_NK100": "",
+    }
+    try:
+        response = requests.get(url, headers=headers, params=params, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+    except requests.RequestException as exc:
+        raise HTTPException(status_code=502, detail=f"KIS 잔고 조회 요청에 실패했습니다: {exc}") from exc
+
+    output1 = data.get("output1") or []
+    output2 = data.get("output2") or []
+    if isinstance(output1, dict):
+        output1 = [output1]
+    if isinstance(output2, list):
+        summary = output2[0] if output2 else {}
+    elif isinstance(output2, dict):
+        summary = output2
+    else:
+        summary = {}
+
+    holdings: list[dict[str, Any]] = []
+    for row in output1:
+        if not isinstance(row, dict):
+            continue
+        holdings.append(
+            {
+                "pdno": row.get("pdno", ""),
+                "prdt_name": row.get("prdt_name") or row.get("hts_kor_isnm") or "",
+                "hldg_qty": parse_int(row.get("hldg_qty") or 0),
+                "pchs_avg_pric": parse_int(row.get("pchs_avg_pric") or 0),
+                "prpr": parse_int(row.get("prpr") or 0),
+                "evlu_pfls_amt": parse_int(row.get("evlu_pfls_amt") or 0),
+                "evlu_pfls_rt": float(str(row.get("evlu_pfls_rt") or "0").replace(",", "").strip() or 0),
+            }
+        )
+
+    return {
+        "output1": holdings,
+        "output2": {
+            "tot_pchs_amt": parse_int(summary.get("tot_pchs_amt") or 0),
+            "tot_evlu_amt": parse_int(summary.get("tot_evlu_amt") or 0),
+            "tot_evlu_pfls_amt": parse_int(summary.get("tot_evlu_pfls_amt") or 0),
+            "dnca_tot_amt": parse_int(
+                summary.get("dnca_tot_amt")
+                or summary.get("tot_dnca")
+                or summary.get("nass_amt")
+                or 0
+            ),
+        },
+    }
+
+
 @app.on_event("startup")
 def on_startup() -> None:
     initialize_stock_data()
@@ -713,6 +797,42 @@ def read_investor_intraday(symbol: str = Query(..., min_length=6, max_length=6))
                 "institution_net_buy": cum_institution,
             })
         return {"symbol": symbol, "data": mock_data}
+
+
+@app.get("/api/account/balance")
+def read_account_balance() -> dict[str, Any]:
+    try:
+        return get_account_balance()
+    except HTTPException:
+        mock_holdings = [
+            {
+                "pdno": "005930",
+                "prdt_name": "삼성전자",
+                "hldg_qty": 12,
+                "pchs_avg_pric": 71000,
+                "prpr": 73500,
+                "evlu_pfls_amt": 30000,
+                "evlu_pfls_rt": 3.52,
+            },
+            {
+                "pdno": "000660",
+                "prdt_name": "SK하이닉스",
+                "hldg_qty": 4,
+                "pchs_avg_pric": 182000,
+                "prpr": 176500,
+                "evlu_pfls_amt": -22000,
+                "evlu_pfls_rt": -3.02,
+            },
+        ]
+        return {
+            "output1": mock_holdings,
+            "output2": {
+                "tot_pchs_amt": 1580000,
+                "tot_evlu_amt": 1588000,
+                "tot_evlu_pfls_amt": 8000,
+                "dnca_tot_amt": 3250000,
+            },
+        }
 
 
 @app.get("/api/health")
